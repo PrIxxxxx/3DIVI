@@ -162,4 +162,9 @@ public class InventorySystem : MonoBehaviour
 
         return 0;
     }
+
+    public bool HasItem(string itemName)
+    {
+        return itemList.Contains(itemName);
+    }
 }
