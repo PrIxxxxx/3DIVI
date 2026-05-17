@@ -142,4 +142,24 @@ public class InventorySystem : MonoBehaviour
 
         return false;
     }
+
+    public int TakeAmmoStack()
+    {
+        foreach (GameObject slot in slotList)
+        {
+            if (slot.transform.childCount > 0)
+            {
+                AmmoStack ammo = slot.transform.GetChild(0).GetComponent<AmmoStack>();
+
+                if (ammo != null)
+                {
+                    int amount = ammo.amount;
+                    Destroy(ammo.gameObject);
+                    return amount;
+                }
+            }
+        }
+
+        return 0;
+    }
 }

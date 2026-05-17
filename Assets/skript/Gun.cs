@@ -1,5 +1,5 @@
 using UnityEngine;
-
+using System.Collections;
 public class Gun : MonoBehaviour
 {
     public Transform firePoint;
@@ -8,6 +8,16 @@ public class Gun : MonoBehaviour
     public float damage = 25f;
     public float range = 100f;
     public float fireRate = 0.25f;
+
+    public int currentAmmo = 0;
+    public int magSize = 10;
+    public float reloadTime = 1.5f;
+
+    private Vector3 startPos;
+    public Vector3 reloadOffset = new Vector3(0, -0.2f, 0);
+    public float reloadMoveSpeed = 6f;
+
+    private bool isReloading = false;
 
     private float nextFireTime;
 
@@ -19,22 +29,70 @@ public class Gun : MonoBehaviour
         {
             Debug.LogError("No Main Camera found! Make sure your camera tag is MainCamera.");
         }
+        startPos = transform.localPosition;
     }
     void Update()
     {
+        if (isReloading) return;
+
         if (Input.GetMouseButtonDown(0) && Time.time >= nextFireTime)
         {
-            if (!InventorySystem.Instance.UseOneAmmo())
+            if (currentAmmo <= 0)
             {
-                Debug.Log("No ammo!");
+                StartCoroutine(Reload());
                 return;
             }
+
+            currentAmmo--;
 
             Shoot();
             nextFireTime = Time.time + fireRate;
 
-            Debug.Log("Ammo left: " + InventorySystem.Instance.pistolAmmo);
+            Debug.Log("Gun ammo: " + currentAmmo);
         }
+
+        if (Input.GetKeyDown(KeyCode.R))
+        {
+            StartCoroutine(Reload());
+        }
+    }
+
+    IEnumerator Reload()
+    {
+        if (isReloading) yield break;
+        if (currentAmmo == magSize) yield break;
+
+        isReloading = true;
+
+        Debug.Log("Reloading...");
+
+        // Gun goes down
+        yield return StartCoroutine(
+            MoveGun(startPos + reloadOffset)
+        );
+
+        // Small wait
+        yield return new WaitForSeconds(0.5f);
+
+        // Take one ammo stack from inventory
+        int loadedAmmo = InventorySystem.Instance.TakeAmmoStack();
+
+        if (loadedAmmo > 0)
+        {
+            currentAmmo = loadedAmmo;
+            Debug.Log("Reloaded: " + currentAmmo);
+        }
+        else
+        {
+            Debug.Log("No ammo stacks in inventory!");
+        }
+
+        // Gun goes back up
+        yield return StartCoroutine(
+            MoveGun(startPos)
+        );
+
+        isReloading = false;
     }
 
     void Shoot()
@@ -61,4 +119,20 @@ public class Gun : MonoBehaviour
 
         Destroy(trail, 0.05f);
     }
+
+    IEnumerator MoveGun(Vector3 target)
+    {
+        while (Vector3.Distance(transform.localPosition, target) > 0.01f)
+        {
+            transform.localPosition = Vector3.Lerp(
+                transform.localPosition,
+                target,
+                Time.deltaTime * reloadMoveSpeed
+            );
+
+            yield return null;
+        }
+
+        transform.localPosition = target;
     }
+}
