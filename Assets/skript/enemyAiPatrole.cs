@@ -6,21 +6,68 @@ public class enemyAiPatrole : MonoBehaviour
     NavMeshAgent agent;
     [SerializeField] LayerMask whatIsGround, whatIsPlayer;
 
+    Animator animator;
+
     Vector3 destPoint;
     bool walkPointSet;
     [SerializeField] float range;
+
+    [SerializeField] float sightRange, attackRange;
+    bool playerInSightRange, playerInAttackRange;
+
+    [SerializeField] float timeBetweenAttacks = 1.5f;
+    bool alreadyAttacked;
+
+    
 
     void Start()
     {
         agent = GetComponent<NavMeshAgent>();
         player = GameObject.Find("Player");
+        animator = GetComponent<Animator>();
 
     }
 
     // Update is called once per frame
     void Update()
     {
-        Patrol();
+        playerInSightRange = Physics.CheckSphere(transform.position, sightRange, whatIsPlayer);
+        playerInAttackRange = Physics.CheckSphere(transform.position, attackRange, whatIsPlayer);
+        if(!playerInAttackRange && !playerInSightRange) Patrol();
+        if(!playerInAttackRange && playerInSightRange) Chase();
+        if(playerInAttackRange && playerInSightRange) Attack();
+
+    }
+    void Attack()
+    {
+        agent.SetDestination(transform.position);
+        agent.velocity = Vector3.zero;
+
+        LookAtPlayer();
+
+        if (!alreadyAttacked)
+        {
+            animator.SetTrigger("Attack");
+
+            PlayerHealth playerHealth = player.GetComponent<PlayerHealth>();
+
+            if (playerHealth != null)
+            {
+                playerHealth.TakeDamage(1);
+            }
+
+            alreadyAttacked = true;
+            Invoke(nameof(ResetAttack), timeBetweenAttacks);
+        }
+    }
+
+    void ResetAttack()
+    {
+        alreadyAttacked = false;
+    }
+    void Chase()
+    {
+        agent.SetDestination(player.transform.position);
     }
 
     void Patrol()
@@ -61,5 +108,20 @@ public class enemyAiPatrole : MonoBehaviour
                 }
             }
         }
+    }
+
+    void LookAtPlayer()
+    {
+        Vector3 direction = player.transform.position - transform.position;
+        direction.y = 0;
+
+        if (direction == Vector3.zero) return;
+
+        Quaternion targetRotation = Quaternion.LookRotation(direction);
+        transform.rotation = Quaternion.Slerp(
+            transform.rotation,
+            targetRotation,
+            Time.deltaTime * 8f
+        );
     }
 }
