@@ -31,12 +31,14 @@ public class enemyAiPatrole : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        playerInSightRange = Physics.CheckSphere(transform.position, sightRange, whatIsPlayer);
-        playerInAttackRange = Physics.CheckSphere(transform.position, attackRange, whatIsPlayer);
-        if(!playerInAttackRange && !playerInSightRange) Patrol();
-        if(!playerInAttackRange && playerInSightRange) Chase();
-        if(playerInAttackRange && playerInSightRange) Attack();
+        playerInSightRange = CanSeePlayer();
 
+        float distanceToPlayer = Vector3.Distance(transform.position, player.transform.position);
+        playerInAttackRange = distanceToPlayer <= attackRange;
+
+        if (!playerInAttackRange && !playerInSightRange) Patrol();
+        if (!playerInAttackRange && playerInSightRange) Chase();
+        if (playerInAttackRange && playerInSightRange) Attack();
     }
     void Attack()
     {
@@ -123,5 +125,46 @@ public class enemyAiPatrole : MonoBehaviour
             targetRotation,
             Time.deltaTime * 8f
         );
+    }
+
+    [SerializeField] LayerMask wallLayer;
+
+    bool CanSeePlayer()
+    {
+        CharacterController playerController = player.GetComponent<CharacterController>();
+
+        Vector3 rayStart = transform.position + Vector3.up * 1.6f;
+
+        Vector3 rayEnd;
+
+        if (playerController != null)
+        {
+            rayEnd = player.transform.position
+                     + playerController.center
+                     + Vector3.up * (playerController.height * 0.25f);
+        }
+        else
+        {
+            rayEnd = player.transform.position + Vector3.up * 1.5f;
+        }
+
+        float distanceToPlayer = Vector3.Distance(rayStart, rayEnd);
+
+        if (distanceToPlayer > sightRange)
+            return false;
+
+        Vector3 directionToPlayer = (rayEnd - rayStart).normalized;
+
+        if (Physics.Raycast(rayStart, directionToPlayer, out RaycastHit hit, distanceToPlayer))
+        {
+            Debug.DrawRay(rayStart, directionToPlayer * distanceToPlayer, Color.red);
+
+            if (hit.transform.root.CompareTag("Player"))
+                return true;
+
+            return false;
+        }
+
+        return false;
     }
 }

@@ -2,8 +2,8 @@ using UnityEngine;
 using System.Collections;
 public class Gun : MonoBehaviour
 {
-    public Transform firePoint;
-    public GameObject bulletTrailPrefab;
+    public Transform firePoint; // no kurienes lodes vizu?li par?d?s
+    public GameObject bulletTrailPrefab; //
     public Camera playerCamera;
     public float damage = 25f;
     public float range = 100f;
@@ -66,15 +66,15 @@ public class Gun : MonoBehaviour
 
         Debug.Log("Reloading...");
 
-        // Gun goes down
+        
         yield return StartCoroutine(
             MoveGun(startPos + reloadOffset)
         );
 
-        // Small wait
+        
         yield return new WaitForSeconds(0.5f);
 
-        // Take one ammo stack from inventory
+        
         int loadedAmmo = InventorySystem.Instance.TakeAmmoStack();
 
         if (loadedAmmo > 0)
@@ -87,7 +87,7 @@ public class Gun : MonoBehaviour
             Debug.Log("No ammo stacks in inventory!");
         }
 
-        // Gun goes back up
+        
         yield return StartCoroutine(
             MoveGun(startPos)
         );

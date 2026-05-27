@@ -121,30 +121,8 @@ public class InventorySystem : MonoBehaviour
         }
         return new GameObject();
     }
-    public void AddAmmo(int amount)
-    {
-        pistolAmmo += amount;
-        Debug.Log("Ammo: " + pistolAmmo);
-    }
 
-    public bool UseOneAmmo()
-    {
-        foreach (GameObject slot in slotList)
-        {
-            if (slot.transform.childCount > 0)
-            {
-                AmmoStack ammo = slot.transform.GetChild(0).GetComponent<AmmoStack>();
 
-                if (ammo != null)
-                {
-                    ammo.UseOne();
-                    return true;
-                }
-            }
-        }
-
-        return false;
-    }
 
     public int TakeAmmoStack()
     {
